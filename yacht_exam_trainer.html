@@ -620,7 +620,9 @@
   document.getElementById('bothBtn').addEventListener('click', () => setViewMode('both'));
   document.getElementById('plBtn').addEventListener('click', () => setViewMode('pl'));
   document.getElementById('ruBtn').addEventListener('click', () => setViewMode('ru'));
-  document.addEventListener('keydown', event => { const k = event.key.toLowerCase(); if (['a','b','c'].includes(k)) selectAnswer(k); if (event.key === 'Enter') checkAnswer(false); });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Enter' && answered) checkAnswer(false);
+  });
   console.info(`Loaded ${QUESTIONS.length} questions and ${QUESTIONS.reduce((s,q)=>s+q.images.length,0)} image references.`);
   window.__TRAINER_DATA__ = QUESTIONS;
   setSyncInputsFromSession();
