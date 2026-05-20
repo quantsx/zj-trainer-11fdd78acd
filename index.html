@@ -229,12 +229,16 @@
     const c = card(q);
     return c.level < MAX_LEVEL && c.wrong > 0 && c.right >= c.wrong && !isWeakNow(q);
   }
+  function mistakePressure(q) {
+    const c = card(q);
+    return Math.max(0, c.wrong - c.right) + (c.last === 'wrong' ? 1 : 0);
+  }
 
   function questionPriority(q) {
     const c = card(q);
     const waitBonus = Math.max(0, Math.min(8, (now() - c.due) / 60000));
     const systemHardBonus = q.systemHard ? 2.5 + q.difficulty * 0.65 : 0;
-    return 1 + (MAX_LEVEL - c.level) * 2.2 + c.wrong * 2.6 + systemHardBonus + waitBonus;
+    return 1 + (MAX_LEVEL - c.level) * 2.2 + mistakePressure(q) * 3.2 + systemHardBonus + waitBonus;
   }
   function shuffle(items) {
     return items.map(item => ({ item, sort: Math.random() })).sort((a, b) => a.sort - b.sort).map(({ item }) => item);
@@ -255,10 +259,10 @@
     const active = QUESTIONS.filter(q => card(q).level < MAX_LEVEL);
     const unanswered = active.filter(q => attempts(q) === 0);
     const answered = active.filter(q => attempts(q) > 0);
-    const dueWeak = answered.filter(q => card(q).wrong > 0 && card(q).due <= t);
-    const dueOther = answered.filter(q => card(q).wrong === 0 && card(q).due <= t);
-    const waitingWeak = answered.filter(q => card(q).wrong > 0 && card(q).due > t);
-    const waitingOther = answered.filter(q => card(q).wrong === 0 && card(q).due > t);
+    const dueWeak = answered.filter(q => isWeakNow(q) && card(q).due <= t);
+    const dueOther = answered.filter(q => !isWeakNow(q) && card(q).due <= t);
+    const waitingWeak = answered.filter(q => isWeakNow(q) && card(q).due > t);
+    const waitingOther = answered.filter(q => !isWeakNow(q) && card(q).due > t);
     return uniqueQuestions([
       ...byPriority(dueWeak),
       ...byPriority(unanswered),
