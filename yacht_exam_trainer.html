@@ -132,7 +132,7 @@
 <body>
   <main class="app">
     <header class="topbar">
-      <div class="brand"><div class="mark">ŻJ</div><div class="brand-copy"><div class="title-row"><h1>Żeglarz Jachtowy: экзаменационный тренажёр</h1><details class="help-details"><summary aria-label="Как работает тренажёр">?</summary><div class="help-popover"><b>Как работает:</b> «Подряд» идёт через 150 вопросов без повторов первого круга. «Сложное» сразу поднимает наверх ошибки, низкий уровень и системно трудные вопросы. Правильные ответы становятся зелёными и появляются реже, ошибки уходят в «Слабые места».</div></details></div><div class="subtitle">150 вопросов на польском и русском, повторение чаще для сложных тем, реже для лёгких.</div></div></div>
+      <div class="brand"><div class="mark">ŻJ</div><div class="brand-copy"><div class="title-row"><h1>Żeglarz Jachtowy: экзаменационный тренажёр</h1><details class="help-details"><summary aria-label="Как работает тренажёр">?</summary><div class="help-popover"><b>Как работает:</b> первый проход идёт по новым вопросам без повторов, пока не увидишь все 150. После этого «Сложное» поднимает наверх ошибки, низкий уровень и системно трудные вопросы. Правильные ответы становятся зелёными и появляются реже, ошибки уходят в «Слабые места».</div></details></div><div class="subtitle">150 вопросов на польском и русском, повторение чаще для сложных тем, реже для лёгких.</div></div></div>
       <div class="toolbar" aria-label="Настройки"><button class="tool-btn active" id="bothBtn" type="button">PL + RU</button><button class="tool-btn" id="plBtn" type="button">PL</button><button class="tool-btn" id="ruBtn" type="button">RU</button><button class="tool-btn active" id="modeSequentialBtn" type="button">Подряд</button><button class="tool-btn" id="modeHardBtn" type="button">Сложное</button><button class="tool-btn" id="modeRandomBtn" type="button">Рандом</button><button class="tool-btn" id="resetBtn" type="button">Сбросить</button></div>
     </header>
     <div class="layout">
@@ -267,18 +267,21 @@
       ...byPriority(waitingOther)
     ]).slice(0, limit);
   }
+  function firstPassQueue(limit = QUESTIONS.length, excludeCurrent = false) {
+    const unanswered = QUESTIONS.filter(q => attempts(q) === 0 && (!excludeCurrent || !current || q.id !== current.id));
+    if (!unanswered.length) return null;
+    if ((state.mode || 'sequential') === 'random') return shuffle(unanswered).slice(0, limit);
+    return unanswered.slice(0, limit);
+  }
   function orderedQueue(limit = QUESTIONS.length) {
     if (forcedQuestionId) {
       const forced = QUESTIONS.find(q => q.id === forcedQuestionId);
       return forced ? [forced] : [];
     }
     const mode = state.mode || 'sequential';
+    const firstPass = firstPassQueue(limit);
+    if (firstPass) return firstPass;
     if (mode === 'hard') return hardQueue(limit);
-    const unanswered = QUESTIONS.filter(q => attempts(q) === 0);
-    if (unanswered.length) {
-      if (mode === 'random') return shuffle(unanswered).slice(0, limit);
-      return unanswered.slice(0, limit);
-    }
     const t = now();
     const active = QUESTIONS.filter(q => card(q).level < MAX_LEVEL);
     if (!active.length) return [];
@@ -304,9 +307,9 @@
   }
 
   function plannedQueueForTurns() {
+    const firstPass = firstPassQueue(QUESTIONS.length, true);
+    if (firstPass) return firstPass;
     if ((state.mode || 'sequential') === 'hard') return hardQueue().filter(q => !current || q.id !== current.id);
-    const unanswered = QUESTIONS.filter(q => attempts(q) === 0 && (!current || q.id !== current.id));
-    if (unanswered.length) return stableOrder(unanswered);
     return plannedActiveQueueForTurns();
   }
 
