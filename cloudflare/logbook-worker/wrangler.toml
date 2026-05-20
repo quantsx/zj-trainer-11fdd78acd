@@ -1,0 +1,8 @@
+name = "zj-trainer-logbook"
+main = "src/worker.js"
+compatibility_date = "2025-05-21"
+workers_dev = true
+preview_urls = false
+
+[vars]
+ALLOWED_ORIGIN = "https://quantsx.github.io"
