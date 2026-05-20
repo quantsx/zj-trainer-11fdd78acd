@@ -35,8 +35,7 @@
     .tool-btn.active { background: var(--blue); color: white; border-color: var(--blue); }
     .layout { display: grid; grid-template-columns: minmax(0, 1fr) 450px; gap: 16px; align-items: start; }
     .panel { background: rgba(255,255,255,.92); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); min-width: 0; }
-    .study { padding: clamp(16px, 3vw, 28px); min-height: 640px; display: flex; flex-direction: column; }
-    #questionView { flex: 1 0 auto; }
+    .study { grid-column: 1; grid-row: 1; padding: clamp(16px, 3vw, 28px); min-height: 640px; }
     .meter-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; margin-bottom: 22px; }
     .meter { height: 13px; border-radius: 999px; background: #e4e9f2; overflow: hidden; }
     .meter > div { height: 100%; width: 0%; border-radius: inherit; background: linear-gradient(90deg, var(--green), #8bd246); transition: width .25s ease; }
@@ -73,7 +72,7 @@
     .main-btn { background: var(--blue); color: #fff; border: 0; border-radius: 8px; padding: 13px 18px; font-weight: 900; cursor: pointer; min-width: 148px; }
     .main-btn:disabled { background: #b9c2d0; cursor: default; }
     .ghost-btn { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 12px 14px; font-weight: 800; cursor: pointer; color: var(--ink); }
-    .side { padding: 14px; overflow: hidden; }
+    .side { grid-column: 2; grid-row: 1 / span 2; padding: 14px; overflow: hidden; }
     .stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; margin-bottom: 10px; }
     .stat { min-width: 0; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 8px 7px; }
     .stat b { display: block; font-size: 1.1rem; line-height: 1.05; }
@@ -130,13 +129,14 @@
     .section-toggle { width: 100%; border: 0; background: transparent; padding: 0; margin: 13px 0 8px; display: flex; align-items: center; justify-content: space-between; gap: 10px; text-align: left; color: var(--ink); cursor: pointer; }
     .section-toggle b { font-size: 1rem; font-weight: 950; }
     .section-toggle span { color: var(--muted); font-size: .74rem; font-weight: 850; }
-    .captain-log { width: min(470px, 100%); margin-top: auto; padding-top: 22px; }
+    .captain-log { grid-column: 1; grid-row: 2; align-self: end; width: min(470px, 100%); margin: 0; }
     .logbook-line { display: grid; grid-template-columns: minmax(0, 1fr) 42px; gap: 8px; align-items: center; padding: 7px; border: 1px solid rgba(34, 102, 227, .22); border-radius: 8px; background: rgba(255,255,255,.78); box-shadow: 0 10px 30px rgba(25, 34, 50, .07); }
     .logbook-line:focus-within { border-color: rgba(34, 102, 227, .55); box-shadow: 0 0 0 3px rgba(34, 102, 227, .08), 0 12px 32px rgba(25, 34, 50, .08); }
     .logbook-input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--ink); padding: 9px 10px; font-weight: 650; }
     .logbook-input::placeholder { color: #7b8494; opacity: 1; }
-    .logbook-submit { width: 40px; height: 40px; border: 0; border-radius: 8px; display: grid; place-items: center; background: #edf4ff; color: var(--blue); font-weight: 950; cursor: pointer; }
+    .logbook-submit { width: 40px; height: 40px; border: 0; border-radius: 8px; display: grid; place-items: center; background: #eaf3ff; color: #2481cc; cursor: pointer; }
     .logbook-submit:hover { background: #dfeaff; }
+    .logbook-icon { width: 22px; height: 22px; display: block; }
     .logbook-modal[hidden] { display: none; }
     .logbook-modal { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 18px; background: rgba(17, 24, 39, .34); }
     .logbook-card { width: min(460px, 100%); border: 1px solid var(--line); border-radius: 8px; background: #fff; box-shadow: 0 28px 80px rgba(17, 24, 39, .22); padding: 16px; }
@@ -151,10 +151,11 @@
     .logbook-secondary, .logbook-primary { border-radius: 8px; padding: 11px 12px; font-weight: 850; cursor: pointer; }
     .logbook-secondary { border: 1px solid var(--line); background: #fff; color: var(--ink); }
     .logbook-primary { border: 1px solid var(--blue); background: var(--blue); color: #fff; }
+    .logbook-secondary:disabled, .logbook-primary:disabled { opacity: .58; cursor: default; }
     .logbook-mock { color: var(--muted); font-size: .78rem; line-height: 1.35; margin-top: 4px; }
     .logbook-sent { display: none; border: 1px solid #b9e6c4; background: var(--green-soft); color: #236232; border-radius: 8px; padding: 12px; line-height: 1.35; }
     .logbook-sent.show { display: block; }
-    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .topbar { grid-template-columns: 1fr; } .toolbar { justify-content: flex-start; } .side { order: -1; } .captain-log { width: 100%; } }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .topbar { grid-template-columns: 1fr; } .toolbar { justify-content: flex-start; } .study, .side, .captain-log { grid-column: 1; grid-row: auto; } .side { order: -1; } .captain-log { width: 100%; } }
     @media (max-width: 640px) { .app { padding: 10px; } .qa-grid { grid-template-columns: 1fr; } .actions { flex-direction: column-reverse; align-items: stretch; } .main-btn, .ghost-btn { width: 100%; } .option { grid-template-columns: 30px 1fr; padding: 11px; } }
   </style>
 </head>
@@ -165,8 +166,9 @@
       <div class="toolbar" aria-label="Настройки"><button class="tool-btn active" id="bothBtn" type="button">PL + RU</button><button class="tool-btn" id="plBtn" type="button">PL</button><button class="tool-btn" id="ruBtn" type="button">RU</button><button class="tool-btn active" id="modeSequentialBtn" type="button">Подряд</button><button class="tool-btn" id="modeHardBtn" type="button">Сложное</button><button class="tool-btn" id="modeRandomBtn" type="button">Рандом</button><button class="tool-btn" id="resetBtn" type="button">Сбросить</button></div>
     </header>
     <div class="layout">
-      <section class="panel study" id="studyPanel"><div id="questionView"><div class="meter-row"><div class="meter" aria-label="Прогресс"><div id="masteryBar"></div></div><div class="pill" id="masteryText">0%</div></div><div class="question-head"><div class="qid" id="qid">Вопрос 1 / 150</div><div class="level-dots" id="levelDots" aria-label="Уровень знания"></div></div><div class="qa-grid" id="questionBlocks"><article class="lang-block" data-lang="pl"><div class="lang-label">Polski</div><p class="question-text" id="questionPl"></p></article><article class="lang-block" data-lang="ru"><div class="lang-label">Русский</div><p class="question-text" id="questionRu"></p></article></div><div class="images" id="imageBox"></div><div class="options" id="options"></div><div class="feedback" id="feedback"></div><div class="actions"><span></span><button class="main-btn" type="button" id="nextBtn" disabled>Дальше</button></div></div><div class="done" id="doneView"><h2>Все 150 вопросов выучены</h2><p>Тренажёр довёл каждый вопрос до уверенного уровня. Перед экзаменом можно сбросить прогресс или пройти только слабые места.</p><button class="main-btn" type="button" id="restartBtn">Начать заново</button></div><form class="captain-log" id="logbookForm"><div class="logbook-line"><input class="logbook-input" id="logbookMessage" type="text" maxlength="180" autocomplete="off" placeholder="Написать автору в бортовой журнал"><button class="logbook-submit" type="submit" aria-label="Отправить в бортовой журнал">&#10003;</button></div></form></section>
+      <section class="panel study" id="studyPanel"><div id="questionView"><div class="meter-row"><div class="meter" aria-label="Прогресс"><div id="masteryBar"></div></div><div class="pill" id="masteryText">0%</div></div><div class="question-head"><div class="qid" id="qid">Вопрос 1 / 150</div><div class="level-dots" id="levelDots" aria-label="Уровень знания"></div></div><div class="qa-grid" id="questionBlocks"><article class="lang-block" data-lang="pl"><div class="lang-label">Polski</div><p class="question-text" id="questionPl"></p></article><article class="lang-block" data-lang="ru"><div class="lang-label">Русский</div><p class="question-text" id="questionRu"></p></article></div><div class="images" id="imageBox"></div><div class="options" id="options"></div><div class="feedback" id="feedback"></div><div class="actions"><span></span><button class="main-btn" type="button" id="nextBtn" disabled>Дальше</button></div></div><div class="done" id="doneView"><h2>Все 150 вопросов выучены</h2><p>Тренажёр довёл каждый вопрос до уверенного уровня. Перед экзаменом можно сбросить прогресс или пройти только слабые места.</p><button class="main-btn" type="button" id="restartBtn">Начать заново</button></div></section>
       <aside class="panel side"><div class="stat-grid"><div class="stat"><b id="knownCount">0</b><span>выучено</span></div><div class="stat"><b id="dueCount">150</b><span id="dueLabel">осталось</span></div><div class="stat"><b id="todayCount">0</b><span>ответов сегодня</span></div><div class="stat"><b id="streakCount">0</b><span>ошибок всего</span></div></div><details class="sync-details" open><summary>Синхронизация</summary><div class="sync-box"><div class="sync-row"><input class="sync-input" id="syncToken" type="password" autocomplete="off" placeholder="GitHub token: gist"></div><div class="sync-actions"><button class="tool-btn" id="syncConnectBtn" type="button">Подключить</button></div><div class="sync-status" id="syncStatus">Не подключено: вставь GitHub token с правом gist.</div></div></details><button class="section-toggle" id="weakToggle" type="button"><b>Слабые места</b><span id="weakToggleText">показать больше</span></button><div class="weak-list" id="weakList"></div><div class="queue-title">Карта 150</div><div class="map-legend"><span><i class="map-swatch current"></i>сейчас</span><span><i class="map-swatch"></i>новый</span><span><i class="map-swatch bad"></i>слабый</span><span><i class="map-swatch low"></i>1 верно</span><span><i class="map-swatch mid"></i>2 верно</span><span><i class="map-swatch mastered"></i>выучено</span></div><div class="mini-list" id="miniList"></div></aside>
+      <form class="captain-log" id="logbookForm"><div class="logbook-line"><input class="logbook-input" id="logbookMessage" type="text" maxlength="180" autocomplete="off" placeholder="Написать автору в бортовой журнал"><button class="logbook-submit" type="submit" aria-label="Отправить в бортовой журнал"><svg class="logbook-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 11.1 20.2 4.2c.7-.3 1.4.4 1.1 1.1l-5.1 15.2c-.2.7-1.1.8-1.6.2l-3.8-5.1-4.4 3.8c-.5.4-1.2 0-1.1-.7l1.1-5.4-2.8-1c-.7-.2-.8-1-.1-1.2z" fill="currentColor"></path><path d="M7.1 13.2 20.3 4.6" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round"></path></svg></button></div></form>
     </div>
   </main>
   <div class="logbook-modal" id="logbookModal" hidden>
@@ -211,6 +213,7 @@
   let remoteSaveTimer = null;
   let remoteSaveInFlight = false;
   let pendingLogbookMessage = '';
+  let logbookCloseTimer = null;
   const forcedQuestionId = Number(searchParams.get('q')) || null;
   let instantQuestionId = null;
   if (searchParams.has('reset')) {
@@ -696,11 +699,14 @@
     });
   }
   function openLogbookModal(message) {
+    clearTimeout(logbookCloseTimer);
     pendingLogbookMessage = message.trim();
     const modal = document.getElementById('logbookModal');
     const name = document.getElementById('logbookName');
     const preview = document.getElementById('logbookPreview');
     const sent = document.getElementById('logbookSent');
+    document.getElementById('logbookKnownBtn').disabled = false;
+    document.getElementById('logbookSendBtn').disabled = false;
     preview.textContent = `Сообщение: "${pendingLogbookMessage}"`;
     sent.className = 'logbook-sent';
     sent.textContent = '';
@@ -709,6 +715,7 @@
     name.focus();
   }
   function closeLogbookModal() {
+    clearTimeout(logbookCloseTimer);
     document.getElementById('logbookModal').hidden = true;
     document.getElementById('logbookMessage').focus();
   }
@@ -726,8 +733,11 @@
     };
     window.__LAST_LOGBOOK_MOCK__ = payload;
     document.getElementById('logbookMessage').value = '';
-    sent.innerHTML = `<b>Записал мок.</b><br>${escapeHtml(payload.signature)}: ${escapeHtml(payload.message)}`;
+    document.getElementById('logbookKnownBtn').disabled = true;
+    document.getElementById('logbookSendBtn').disabled = true;
+    sent.innerHTML = '<b>Отправлено</b>';
     sent.classList.add('show');
+    logbookCloseTimer = setTimeout(closeLogbookModal, 1000);
   }
   function initLogbook() {
     const message = document.getElementById('logbookMessage');
