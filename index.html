@@ -194,6 +194,7 @@
   const SYNC_TOKEN_KEY = 'yachtExamTrainer.syncToken.v1';
   const LOGBOOK_SIGN_KEY = 'yachtExamTrainer.logbookSignature.v1';
   const REMOTE_GIST_ID = '3917637581d2b268776d3d2eddf7dbc7';
+  const REMOTE_GIST_OWNER = 'quantsx';
   const REMOTE_STATE_FILE = 'yacht-exam-trainer-state.json';
   const REQUIRED_RIGHT = 3;
   const MAX_LEVEL = 3;
@@ -210,6 +211,7 @@
   let autoAdvanceTimer = null;
   let syncReady = false;
   let syncToken = localStorage.getItem(SYNC_TOKEN_KEY) || sessionStorage.getItem(SYNC_TOKEN_KEY) || '';
+  let syncLogin = '';
   let remoteSaveTimer = null;
   let remoteSaveInFlight = false;
   let pendingLogbookMessage = '';
@@ -520,26 +522,55 @@
     return { ...base, ...remote, cards: base.cards };
   }
   async function gistRequest(method, body) {
-    const headers = { Accept: 'application/vnd.github+json' };
+    const headers = { Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
     if (syncToken) headers.Authorization = `Bearer ${syncToken}`;
     if (body) headers['Content-Type'] = 'application/json';
     const res = await fetch(`https://api.github.com/gists/${REMOTE_GIST_ID}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
     if (!res.ok) {
       const detail = await res.text().catch(() => '');
-      const err = new Error(`GitHub API ${res.status}${detail ? ': ' + detail.slice(0, 180) : ''}`);
+      let parsed = {};
+      try { parsed = detail ? JSON.parse(detail) : {}; } catch (_) {}
+      const err = new Error(`GitHub API ${res.status}${parsed.message ? ': ' + parsed.message : ''}`);
       err.status = res.status;
+      err.githubMessage = parsed.message || detail.slice(0, 180);
       throw err;
     }
     return res.json();
   }
+  async function readTokenLogin() {
+    const headers = { Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', Authorization: `Bearer ${syncToken}` };
+    const res = await fetch('https://api.github.com/user', { headers });
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '');
+      let parsed = {};
+      try { parsed = detail ? JSON.parse(detail) : {}; } catch (_) {}
+      const err = new Error(`GitHub API ${res.status}${parsed.message ? ': ' + parsed.message : ''}`);
+      err.status = res.status;
+      err.githubMessage = parsed.message || detail.slice(0, 180);
+      throw err;
+    }
+    const user = await res.json();
+    return user.login || '';
+  }
+  function syncAuthMessage(err) {
+    const githubMessage = err.githubMessage ? ` GitHub: ${err.githubMessage}` : '';
+    if (err.status === 401) return `GitHub не принял token: он истёк, отозван или скопирован не полностью.${githubMessage}`;
+    if (err.status === 403) {
+      if ((err.githubMessage || '').toLowerCase().includes('rate limit')) return `GitHub временно ограничил запросы. Прогресс сохранён локально; попробуй позже.${githubMessage}`;
+      return `Token валидный, но не может писать в gist. Нужен token от аккаунта ${REMOTE_GIST_OWNER}: classic со scope gist или fine-grained с User permissions -> Gists -> Read and write.${githubMessage}`;
+    }
+    return `Не удалось подключить sync: ${err.message}.`;
+  }
   function stopSyncAfterAuthError(err) {
     if (![401, 403].includes(err.status)) return false;
+    if (err.status === 403 && (err.githubMessage || '').toLowerCase().includes('rate limit')) return false;
     syncReady = false;
     syncToken = '';
+    syncLogin = '';
     localStorage.removeItem(SYNC_TOKEN_KEY);
     sessionStorage.removeItem(SYNC_TOKEN_KEY);
     document.getElementById('syncToken').value = '';
-    setSyncStatus('Sync остановлен: token не подходит или не имеет доступа к gist. Прогресс сохранён локально; вставь новый classic token с правом gist.', 'bad');
+    setSyncStatus(`Sync остановлен. ${syncAuthMessage(err)} Прогресс сохранён локально.`, 'bad');
     return true;
   }
   async function readRemoteBlob() {
@@ -570,23 +601,30 @@
     sessionStorage.setItem(SYNC_TOKEN_KEY, syncToken);
     setSyncStatus('Подключаюсь к GitHub...', '');
     try {
+      syncLogin = await readTokenLogin();
+      if (syncLogin !== REMOTE_GIST_OWNER) {
+        const err = new Error('Wrong GitHub account');
+        err.status = 403;
+        err.githubMessage = `token от аккаунта ${syncLogin || 'unknown'}, а gist принадлежит ${REMOTE_GIST_OWNER}`;
+        throw err;
+      }
       const remoteBlob = await readRemoteBlob();
       const remoteState = remoteStateFromBlob(remoteBlob);
       if (remoteState) {
         state = normalizeRemoteState(remoteState);
         syncReady = true;
         clearCurrentLocalState();
-        setSyncStatus(`Sync подключен. Загружено: ${remoteBlob.updatedAt || 'remote state'}.`, 'ok');
+        setSyncStatus(`Sync подключен как ${syncLogin}. Загружено: ${remoteBlob.updatedAt || 'remote state'}.`, 'ok');
         renderQuestion();
       } else {
         syncReady = true;
         await pushRemoteStateNow();
-        setSyncStatus('Sync подключен. Создал новый удалённый прогресс.', 'ok');
+        setSyncStatus(`Sync подключен как ${syncLogin}. Создал новый удалённый прогресс.`, 'ok');
       }
     } catch (err) {
       if (stopSyncAfterAuthError(err)) return;
       syncReady = false;
-      setSyncStatus(`Не удалось подключить sync: ${err.message}.`, 'bad');
+      setSyncStatus(syncAuthMessage(err), 'bad');
     }
   }
   function scheduleRemoteSave() {
