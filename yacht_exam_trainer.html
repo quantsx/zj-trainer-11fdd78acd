@@ -214,6 +214,7 @@
   let syncLogin = '';
   let remoteSaveTimer = null;
   let remoteSaveInFlight = false;
+  let suppressRemoteSave = false;
   let pendingLogbookMessage = '';
   let logbookCloseTimer = null;
   const forcedQuestionId = Number(searchParams.get('q')) || null;
@@ -261,7 +262,7 @@
   }
   function saveState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    if (syncReady) {
+    if (syncReady && !suppressRemoteSave) {
       scheduleRemoteSave();
     }
   }
@@ -612,13 +613,16 @@
       const remoteState = remoteStateFromBlob(remoteBlob);
       if (remoteState) {
         state = normalizeRemoteState(remoteState);
+        await writeRemoteBlob(remoteBlob);
         syncReady = true;
         clearCurrentLocalState();
         setSyncStatus(`Sync подключен как ${syncLogin}. Загружено: ${remoteBlob.updatedAt || 'remote state'}.`, 'ok');
-        renderQuestion();
+        suppressRemoteSave = true;
+        try { renderQuestion(); }
+        finally { suppressRemoteSave = false; }
       } else {
-        syncReady = true;
         await pushRemoteStateNow();
+        syncReady = true;
         setSyncStatus(`Sync подключен как ${syncLogin}. Создал новый удалённый прогресс.`, 'ok');
       }
     } catch (err) {
@@ -633,7 +637,7 @@
     remoteSaveTimer = setTimeout(pushRemoteStateNow, 650);
   }
   async function pushRemoteStateNow() {
-    if (!syncReady || !syncToken || remoteSaveInFlight) return;
+    if (!syncToken || remoteSaveInFlight) return;
     remoteSaveInFlight = true;
     setSyncStatus('Сохраняю прогресс в GitHub...', '');
     try {
