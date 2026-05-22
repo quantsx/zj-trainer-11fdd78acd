@@ -193,6 +193,7 @@
   const LEGACY_STORAGE_KEYS = ['yachtExamTrainer.localFallback.v1', 'yachtExamTrainer.v3'];
   const SYNC_TOKEN_KEY = 'yachtExamTrainer.syncToken.v1';
   const SYNC_PAUSE_KEY = 'yachtExamTrainer.syncPausedUntil.v1';
+  const SYNC_DIRTY_KEY = 'yachtExamTrainer.syncDirty.v1';
   const LOGBOOK_SIGN_KEY = 'yachtExamTrainer.logbookSignature.v1';
   const REMOTE_GIST_ID = '3917637581d2b268776d3d2eddf7dbc7';
   const REMOTE_GIST_OWNER = 'quantsx';
@@ -266,8 +267,18 @@
     localStorage.removeItem(STORAGE_KEY);
     LEGACY_STORAGE_KEYS.forEach(key => localStorage.removeItem(key));
   }
+  function hasUnsyncedLocalState() {
+    return Boolean(localStorage.getItem(SYNC_DIRTY_KEY) && localStorage.getItem(STORAGE_KEY));
+  }
+  function markSyncDirty() {
+    localStorage.setItem(SYNC_DIRTY_KEY, String(now()));
+  }
+  function clearSyncDirty() {
+    localStorage.removeItem(SYNC_DIRTY_KEY);
+  }
   function saveState({ remote = true } = {}) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    if (remote) markSyncDirty();
     if (remote && syncReady && !suppressRemoteSave) {
       scheduleRemoteSave();
     }
@@ -638,14 +649,21 @@
       }
       const remoteBlob = await readRemoteBlob();
       const remoteState = remoteStateFromBlob(remoteBlob);
+      const shouldUploadLocal = hasUnsyncedLocalState();
       if (remoteState) {
-        state = normalizeRemoteState(remoteState);
-        await writeRemoteBlob(remoteBlob);
+        if (shouldUploadLocal) {
+          await writeRemoteBlob(remoteBlobFromState());
+          clearSyncDirty();
+        } else {
+          state = normalizeRemoteState(remoteState);
+          await writeRemoteBlob(remoteBlob);
+          clearSyncDirty();
+        }
         syncPausedUntil = 0;
         localStorage.removeItem(SYNC_PAUSE_KEY);
         syncReady = true;
         clearCurrentLocalState();
-        setSyncStatus(`Sync подключен как ${syncLogin}. Загружено: ${remoteBlob.updatedAt || 'remote state'}.`, 'ok');
+        setSyncStatus(shouldUploadLocal ? `Sync подключен как ${syncLogin}. Отправил локальный прогресс в GitHub.` : `Sync подключен как ${syncLogin}. Загружено: ${remoteBlob.updatedAt || 'remote state'}.`, 'ok');
         suppressRemoteSave = true;
         try { renderQuestion(); }
         finally { suppressRemoteSave = false; }
@@ -683,6 +701,7 @@
       lastRemoteSaveAt = now();
       syncPausedUntil = 0;
       localStorage.removeItem(SYNC_PAUSE_KEY);
+      clearSyncDirty();
       setSyncStatus(`Сохранено в GitHub: ${new Date().toLocaleTimeString()}.`, 'ok');
     } catch (err) {
       if (stopSyncAfterAuthError(err)) return;
